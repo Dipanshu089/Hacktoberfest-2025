@@ -5,6 +5,7 @@ from bfs import bfs, init_graph as init_bfs
 from bellman_ford import bellman_ford, init_graph as init_bellman_ford
 from floyd_warshall import floyd_warshall, init_graph as init_floyd_warshall
 from dijkstra import dijkstra, init_graph as init_dijkstra
+from topological_sort import topological_sort_util, kahns_algorithm, init_graph as init_topo
 
 def main():
     # DFS
@@ -37,6 +38,16 @@ def main():
     print("\nDistances from node 0 (Dijkstra):")
     distance = dijkstra(5, 0)
     print(distance)
+
+    # Topological Sort
+    init_topo(5)
+    print("\nTopological Sort using DFS:")
+    result_dfs = topological_sort_util()
+    print(" -> ".join(map(str, result_dfs)))
+    
+    print("\nTopological Sort using Kahn's Algorithm (BFS):")
+    result_kahn = kahns_algorithm()
+    print(" -> ".join(map(str, result_kahn)))
 
 if __name__ == "__main__":
     main()
