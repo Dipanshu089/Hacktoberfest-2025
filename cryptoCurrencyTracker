@@ -1,0 +1,141 @@
+import threading  
+import requests  
+import time  
+import logging  
+import json  
+from datetime import datetime  
+from collections import deque  
+  
+# =========================  
+# Logging Configuration  
+# =========================  
+logging.basicConfig(  
+    level=logging.INFO,  
+    format="%(asctime)s [%(levelname)s] %(message)s",  
+    handlers=[  
+        logging.FileHandler("crypto_tracker.log"),  
+        logging.StreamHandler()  
+    ]  
+)  
+  
+# =========================  
+# Configuration Loader  
+# =========================  
+def load_config(config_file="config.json"):  
+    try:  
+        with open(config_file, "r") as f:  
+            config = json.load(f)  
+            logging.info("Configuration loaded successfully.")  
+            return config  
+    except Exception as e:  
+        logging.error(f"Error loading config: {e}")  
+        return {}  
+  
+# =========================  
+# Cache Manager  
+# =========================  
+class CacheManager:  
+    def __init__(self, max_size=50):  
+        self.cache = deque(maxlen=max_size)  
+  
+    def add(self, data):  
+        self.cache.append(data)  
+  
+    def get_latest(self):  
+        return self.cache[-1] if self.cache else None  
+  
+# =========================  
+# Crypto Price Fetcher  
+# =========================  
+class CryptoFetcher(threading.Thread):  
+    def __init__(self, symbol, interval, cache):  
+        super().__init__()  
+        self.symbol = symbol  
+        self.interval = interval  
+        self.cache = cache  
+        self.running = True  
+  
+    def run(self):  
+        while self.running:  
+            try:  
+                url = f"https://api.coingecko.com/api/v3/simple/price?ids={self.symbol}&vs_currencies=usd"  
+                response = requests.get(url, timeout=5)  
+                if response.status_code == 200:  
+                    data = response.json()  
+                    price = data.get(self.symbol, {}).get("usd")  
+                    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  
+                    record = {"symbol": self.symbol, "price": price, "time": timestamp}  
+                    self.cache.add(record)  
+                    logging.info(f"Fetched {self.symbol.upper()} price: ${price}")  
+                else:  
+                    logging.warning(f"Failed to fetch {self.symbol}: HTTP {response.status_code}")  
+            except Exception as e:  
+                logging.error(f"Error fetching data for {self.symbol}: {e}")  
+  
+            time.sleep(self.interval)  
+  
+    def stop(self):  
+        self.running = False  
+  
+# =========================  
+# Data Processor  
+# =========================  
+class DataProcessor(threading.Thread):  
+    def __init__(self, cache):  
+        super().__init__()  
+        self.cache = cache  
+        self.running = True  
+  
+    def run(self):  
+        while self.running:  
+            latest = self.cache.get_latest()  
+            if latest:  
+                price = latest["price"]  
+                symbol = latest["symbol"]  
+                if price:  
+                    if price > 20000:  
+                        logging.info(f"{symbol.upper()} is above $20,000 🚀")  
+                    else:  
+                        logging.info(f"{symbol.upper()} is below $20,000 📉")  
+            time.sleep(2)  
+  
+    def stop(self):  
+        self.running = False  
+  
+# =========================  
+# Main Program  
+# =========================  
+if __name__ == "__main__":  
+    config = load_config()  
+  
+    if not config:  
+        logging.error("No configuration found. Exiting.")  
+        exit(1)  
+  
+    cache = CacheManager(max_size=100)  
+  
+    # Create threads for each crypto symbol  
+    fetchers = []  
+    for symbol in config.get("symbols", []):  
+        fetcher = CryptoFetcher(symbol, config.get("interval", 10), cache)  
+        fetchers.append(fetcher)  
+  
+    processor = DataProcessor(cache)  
+  
+    # Start threads  
+    for f in fetchers:  
+        f.start()  
+    processor.start()  
+  
+    try:  
+        while True:  
+            time.sleep(1)  
+    except KeyboardInterrupt:  
+        logging.info("Stopping threads...")  
+        for f in fetchers:  
+            f.stop()  
+        processor.stop()  
+        for f in fetchers:  
+            f.join()  
+        processor.join()  
+        logging.info("Program terminated.")  
