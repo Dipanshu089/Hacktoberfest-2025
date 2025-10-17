@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personality Tester</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #89f7fe, #66a6ff);
+      color: #333;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .question {
+      background: white;
+      padding: 20px;
+      margin: 15px auto;
+      border-radius: 15px;
+      width: 80%;
+      max-width: 500px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    #result {
+      font-size: 1.2em;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 Simple Personality Tester</h1>
+
+  <div id="quiz">
+    <div class="question">
+      <p>1️⃣ You enjoy spending time with large groups of people.</p>
+      <label><input type="radio" name="q1" value="E"> Agree</label><br>
+      <label><input type="radio" name="q1" value="I"> Disagree</label>
+    </div>
+
+    <div class="question">
+      <p>2️⃣ You prefer planning over being spontaneous.</p>
+      <label><input type="radio" name="q2" value="J"> Agree</label><br>
+      <label><input type="radio" name="q2" value="P"> Disagree</label>
+    </div>
+
+    <div class="question">
+      <p>3️⃣ You rely more on facts than feelings.</p>
+      <label><input type="radio" name="q3" value="T"> Agree</label><br>
+      <label><input type="radio" name="q3" value="F"> Disagree</label>
+    </div>
+
+    <button onclick="calculateResult()">See Result</button>
+  </div>
+
+  <div id="result"></div>
+
+  <script>
+    function calculateResult() {
+      const q1 = document.querySelector('input[name="q1"]:checked');
+      const q2 = document.querySelector('input[name="q2"]:checked');
+      const q3 = document.querySelector('input[name="q3"]:checked');
+
+      if (!q1 || !q2 || !q3) {
+        alert("Please answer all questions!");
+        return;
+      }
+
+      let result = "";
+
+      if (q1.value === "E") result += "Extroverted ";
+      else result += "Introverted ";
+
+      if (q2.value === "J") result += "Planner ";
+      else result += "Flexible ";
+
+      if (q3.value === "T") result += "Thinker";
+      else result += "Feeler";
+
+      document.getElementById("result").textContent = "Your personality type: " + result + " 🧩";
+    }
+  </script>
+</body>
+</html>
